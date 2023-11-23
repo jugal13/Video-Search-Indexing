@@ -11,3 +11,7 @@ python mongo_setup.py
 
 Make sure to start your mongod server by locating mongod from the bin folder and creating a data folder
 ./mongod --dbpath /usr/local/data
+
+Reference
+
+https://github.com/oaubert/python-vlc/blob/master/examples/tkvlc.py
