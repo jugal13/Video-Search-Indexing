@@ -55,7 +55,7 @@ def download_and_install_mongodb(version):
     print("MongoDB installation complete.")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": 
 
     mongodb_version = "7.0.3"
     download_and_install_mongodb(mongodb_version)
