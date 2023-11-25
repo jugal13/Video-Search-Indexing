@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 def read_rgb_file(file_path, width, height):
     frame_size = width * height * 3  # 3 bytes per pixel (RGB)
@@ -17,7 +18,7 @@ def read_rgb_file(file_path, width, height):
 
 def read_frame(file_path):
 
-    width, height = 
+    width, height = 352, 288
 
     concatenated_frames = []
 
@@ -27,3 +28,25 @@ def read_frame(file_path):
         concatenated_frames.append(frame)
     
     return concatenated_frames
+
+def read_first_and_last_frame(file_path, width=352, height=288):
+    frame_size = width * height * 3
+    with open(file_path, 'rb') as file:
+        # Get the total file size
+        file.seek(0, os.SEEK_END)
+        total_file_size = file.tell()
+
+        # Calculate the total number of frames
+        total_frames = total_file_size // frame_size
+
+        # Read the first frame
+        file.seek(0)
+        first_frame_data = file.read(frame_size)
+        first_frame = np.frombuffer(first_frame_data, dtype=np.uint8).reshape((height, width, 3))
+
+        # Seek to the last frame
+        file.seek(-frame_size, os.SEEK_END)
+        last_frame_data = file.read(frame_size)
+        last_frame = np.frombuffer(last_frame_data, dtype=np.uint8).reshape((height, width, 3))
+
+        return first_frame, last_frame, total_frames
