@@ -50,3 +50,29 @@ def read_first_and_last_frame(file_path, width=352, height=288):
         last_frame = np.frombuffer(last_frame_data, dtype=np.uint8).reshape((height, width, 3))
 
         return first_frame, last_frame, total_frames
+    
+def read_rgb_custom_start_end(file_path, start_frame, end_frame, width=352, height=288):
+    frame_size = width * height * 3  # 3 bytes per pixel (RGB)
+
+    with open(file_path, 'rb') as file:
+        # Skip frames until the start frame
+        file.seek(frame_size * start_frame)
+
+        for frame_num in range(start_frame, end_frame + 1):
+            # Read data for one frame
+            frame_data = file.read(frame_size)
+            if not frame_data:
+                break  # Exit the loop if no more data is available
+
+            # Convert the bytes into a 3D numpy array (height x width x RGB)
+            frame = np.frombuffer(frame_data, dtype=np.uint8).reshape((height, width, 3))
+            yield frame
+
+def cut_rgb_video(input_file_path, output_file_path, start_frame, end_frame):
+    width, height = 352, 288  # Frame dimensions
+
+    with open(output_file_path, 'wb') as output_file:
+        for frame in read_rgb_file(input_file_path, width, height, start_frame, end_frame):
+            # Write each frame to the output file
+            frame_bytes = frame.tobytes()
+            output_file.write(frame_bytes)
