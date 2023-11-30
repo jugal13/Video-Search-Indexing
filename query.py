@@ -1,66 +1,48 @@
-import os
-import glob
-import pandas as pd
-import cv2
 import time
 import pickle
-
-# from Y_values_to_string import concatenate_y_values
+import numpy as np
+import argparse
 from get_hash import generate_frame_hash
-# from video_database import connect_to_mongo_server, find_by_hash, store_video_data
-from read_rgb import read_first_and_last_frame
+from read_rgb import read_rgb_file
 
 
+def query_frame_diff(file_path, hash_video_database):
 
-def test(video_path, hash_values):
-    
-    # print('Hash Generated')
-    # frame_number, video_path = find_by_hash(col=collection, hash_value=frame_hash)
-    # print('Query Ran')
+    width, height = 352, 288
+    prev_frame = None
+    idx = 0
 
-
-
-    return 
-
-
-def main():
-    start_time = time.time()
-    # client = connect_to_mongo_server()
-    # db = client["VideoSearchIndexing"]
-    # collection = db["VideoHash"]
-    # collection.drop()
-    # result = collection.find({})
-    # result_pair = [(str(record['hash'])) for record in result]
-    # print(result_pair)
-    # print('Connected to MongoDB')
-    video_path = '/Users/sanjay/Downloads/576_final_PA/Queries/video1_1.rgb'
-    pickle_path = './hash-videos/combined.pkl'
-    hash_values = pickle.load(open(pickle_path, 'wb'))
-    first_frame, last_frame, video_length = read_first_and_last_frame(video_path)
-
-    first_frame_hash, last_frame_hash = generate_frame_hash(first_frame), generate_frame_hash(last_frame)
-    
-
-    first_frame_results, last_frame_results = hash_values[first_frame_hash], hash_values[last_frame_hash]
-
-
-
-    if len(first_frame_results) == 1:
-        end_time = time.time()
-        print(f'Time taken: {end_time - start_time}')
-        print(first_frame_results[0], first_frame_results[1])
-        return
-    
-    elif len(last_frame_results) == 1:
-        # path_to_hash = pickle.load(open('./hash-videos/path_to_frame_hash.pkl', 'rb'))
-        end_time = time.time()
-        print(f'Time taken: {end_time - start_time}')
-        print(last_frame_results[0] - video_length, last_frame_results[1])
-        return
-    # client.close()
-    else:
-        print('Still implementing')
+    for frame in read_rgb_file(file_path, width, height):
+        idx += 1
+        if prev_frame is not None:
+            # Compute the absolute difference between frames
+            frame_diff = np.abs(frame - prev_frame)
+            frame_diff_sum = np.sum(frame_diff)
+            if frame_diff_sum > 0:
+                diff_hash = generate_frame_hash(frame_diff)
+                res = hash_video_database[diff_hash]
+                if(len(res)) == 1:
+                    video_path = res[0][1]
+                    first_frame = res[0][0] - idx + 2
+                    print(f'Query found in {video_path.split("/")[-1][:-4]} at index {(first_frame / 30) // 60} mins {(first_frame / 30) % 60} seconds')
+                    return first_frame, video_path
+        prev_frame = frame
 
 
 if __name__ == '__main__':
-    main()
+
+    # if video path as cmd arg
+    parser = argparse.ArgumentParser(description='Query path.')
+    parser.add_argument('--query_path', type=str, help='Path to the video file')
+    args = parser.parse_args()
+    query_path = args.query_path
+
+    diff_pickle_path = './hash-diff-videos/combined.pkl'
+    diff_hash_values = pickle.load(open(diff_pickle_path, 'rb')) #0.4s
+
+    start_time = time.time()
+    first_frame, video_path = query_frame_diff(query_path, diff_hash_values) #0.003s
+    end_time = time.time()
+
+    elapsed_time = end_time - start_time
+    print(f"Time taken to query: {elapsed_time} seconds")

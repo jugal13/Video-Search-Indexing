@@ -72,7 +72,7 @@ def cut_rgb_video(input_file_path, output_file_path, start_frame, end_frame):
     width, height = 352, 288  # Frame dimensions
 
     with open(output_file_path, 'wb') as output_file:
-        for frame in read_rgb_file(input_file_path, width, height, start_frame, end_frame):
+        for frame in read_rgb_custom_start_end(input_file_path, start_frame, end_frame, width, height):
             # Write each frame to the output file
             frame_bytes = frame.tobytes()
             output_file.write(frame_bytes)

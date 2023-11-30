@@ -4,7 +4,6 @@ import numpy as np
 def generate_frame_hash(y_channel_data):
     # Convert Y channel data to string
     # y_channel_string = ''.join(map(str, y_channel_data))
-    
 
     hash_object = hashlib.sha256()
     y_bytes = y_channel_data.tobytes()
