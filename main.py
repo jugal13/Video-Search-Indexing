@@ -1,17 +1,39 @@
-import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel, QFileDialog
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
-from PyQt5.QtCore import QUrl
+from PyQt5.QtCore import QUrl, Qt
+
+import time
+import pickle
+import sys
+
+from query import query_frame_diff, convertFrameToMin, convertFrameToSec
+
+statusMessage = {
+    QMediaPlayer.PausedState: "Paused",
+    QMediaPlayer.PlayingState: "Playing",
+    QMediaPlayer.StoppedState: "Stopped",
+
+    QMediaPlayer.LoadingMedia: "LoadingMedia",
+    QMediaPlayer.LoadedMedia: "LoadedMedia",
+    QMediaPlayer.BufferingMedia: "BufferingMedia",
+    QMediaPlayer.BufferedMedia: "BufferedMedia",
+    QMediaPlayer.EndOfMedia: "EndOfMedia",
+}
+
+diff_pickle_path = './hash-diff-videos/combined.pkl'
+diff_hash_values = pickle.load(open(diff_pickle_path, 'rb'))  # 0.4s
 
 
 class VideoPlayer(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Video Player")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 356, 428)
 
         self.file_name = ""
+        self.first_load = False
+        self.matched_first_frame = 0
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -21,19 +43,19 @@ class VideoPlayer(QMainWindow):
 
         self.select_video_button = QPushButton("Select Video")
         self.play_button = QPushButton("Play")
-        self.pause_button = QPushButton("Pause")
         self.stop_button = QPushButton("Stop")
-        self.resume_button = QPushButton("Resume")
 
         self.file_label = QLabel("No file selected")
+        self.file_label.setMinimumHeight(10)
+        self.file_label.setMaximumHeight(20)
+        self.file_label.setAlignment(Qt.AlignCenter)
 
         self.layout = QVBoxLayout()
+
         self.layout.addWidget(self.video_widget)
         self.layout.addWidget(self.file_label)
         self.layout.addWidget(self.select_video_button)
         self.layout.addWidget(self.play_button)
-        self.layout.addWidget(self.pause_button)
-        self.layout.addWidget(self.resume_button)
         self.layout.addWidget(self.stop_button)
 
         self.central_widget.setLayout(self.layout)
@@ -42,36 +64,73 @@ class VideoPlayer(QMainWindow):
 
         self.select_video_button.clicked.connect(self.select_video)
         self.play_button.clicked.connect(self.play_video)
-        self.pause_button.clicked.connect(self.pause_video)
-        self.resume_button.clicked.connect(self.resume_video)
         self.stop_button.clicked.connect(self.stop_video)
-        self.media_player.mediaStatusChanged.connect(self.statusChanged)
+        self.media_player.mediaStatusChanged.connect(self.mediaStatusChanged)
+        self.media_player.stateChanged.connect(self.playerStatusChanged)
 
     def select_video(self):
         self.file_name, _ = QFileDialog.getOpenFileName(self, "Open Video")
+
+        if not self.file_name:
+            return
+
+        start_time = time.time()
+        self.matched_first_frame, matched_video_path = query_frame_diff(
+            self.file_name,
+            diff_hash_values
+        )  # 0.003s
+        end_time = time.time()
+
+        elapsed_time = end_time - start_time
+        print(f"Time taken to query: {elapsed_time} seconds")
+
+        video_name = matched_video_path.split("/")[-1].split(".")[0]
+        # TODO fix this path as absolute path to folder
+        video_path = "./dataset/videos/" + \
+            video_name + ".mp4"
+
+        time_in_min = convertFrameToMin(self.matched_first_frame)
+        time_in_sec = convertFrameToSec(self.matched_first_frame)
+
+        print("Matched Video: ", video_name)
+        print("Matched Frame Number: ", self.matched_first_frame)
+        print("Matched Time: ", time_in_min,
+              " minutes ", time_in_sec, " seconds")
+
         self.media_player.setMedia(
             QMediaContent(
-                QUrl.fromLocalFile(self.file_name)
+                QUrl.fromLocalFile(video_path)
             )
         )
-        self.file_label.setText(f"Selected: {self.file_name}")
+        self.file_label.setText(f"Selected: {video_name}.mp4")
+        self.first_load = True
 
     def play_video(self):
-        if self.file_name != '':
+        if self.media_player.state() == QMediaPlayer.PausedState:
             self.media_player.play()
-
-    def pause_video(self):
-        self.media_player.pause()
-
-    def resume_video(self):
-        self.media_player.play()
+            self.play_button.setText("Pause")
+        elif self.media_player.state() == QMediaPlayer.PlayingState:
+            self.media_player.pause()
+            self.play_button.setText("Play")
+        elif self.media_player.state() == QMediaPlayer.StoppedState:
+            self.media_player.play()
+            self.play_button.setText("Pause")
 
     def stop_video(self):
         self.media_player.stop()
+        self.play_button.setText("Play")
 
-    def statusChanged(self, status):
-        if status == QMediaPlayer.LoadedMedia:
-            self.media_player.setPosition(5000)
+    def mediaStatusChanged(self, status):
+        print(statusMessage[status])
+        if status == QMediaPlayer.LoadedMedia and self.first_load:
+            time_in_ms = int(self.matched_first_frame / 30 * 1000)
+            self.media_player.setPosition(time_in_ms)
+            self.media_player.play()
+            self.first_load = False
+            self.play_button.setText("Pause")
+
+    def playerStatusChanged(self, status):
+        print(statusMessage[status])
 
 
 if __name__ == "__main__":
