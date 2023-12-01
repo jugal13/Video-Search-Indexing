@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QVBoxLayout, QLabel, QFileDialog
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QVideoWidget
-from PyQt5.QtCore import QUrl, Qt
+from PyQt5.QtCore import QUrl, Qt, QTime
 
 import time
 import pickle
@@ -29,7 +29,7 @@ class VideoPlayer(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Video Player")
-        self.setGeometry(100, 100, 356, 428)
+        self.setGeometry(100, 100, 374, 472)
 
         self.file_name = ""
         self.first_load = False
@@ -50,9 +50,15 @@ class VideoPlayer(QMainWindow):
         self.file_label.setMaximumHeight(20)
         self.file_label.setAlignment(Qt.AlignCenter)
 
+        self.timer_label = QLabel("00:00/00:00")
+        self.timer_label.setMinimumHeight(10)
+        self.timer_label.setMaximumHeight(20)
+        self.timer_label.setAlignment(Qt.AlignCenter)
+
         self.layout = QVBoxLayout()
 
         self.layout.addWidget(self.video_widget)
+        self.layout.addWidget(self.timer_label)
         self.layout.addWidget(self.file_label)
         self.layout.addWidget(self.select_video_button)
         self.layout.addWidget(self.play_button)
@@ -65,8 +71,10 @@ class VideoPlayer(QMainWindow):
         self.select_video_button.clicked.connect(self.select_video)
         self.play_button.clicked.connect(self.play_video)
         self.stop_button.clicked.connect(self.stop_video)
+
         self.media_player.mediaStatusChanged.connect(self.mediaStatusChanged)
         self.media_player.stateChanged.connect(self.playerStatusChanged)
+        self.media_player.positionChanged.connect(self.postionStatusChanged)
 
     def select_video(self):
         self.file_name, _ = QFileDialog.getOpenFileName(self, "Open Video")
@@ -121,7 +129,7 @@ class VideoPlayer(QMainWindow):
         self.play_button.setText("Play")
 
     def mediaStatusChanged(self, status):
-        print(statusMessage[status])
+        # print(statusMessage[status])
         if status == QMediaPlayer.LoadedMedia and self.first_load:
             time_in_ms = int(self.matched_first_frame / 30 * 1000)
             self.media_player.setPosition(time_in_ms)
@@ -130,11 +138,28 @@ class VideoPlayer(QMainWindow):
             self.play_button.setText("Pause")
 
     def playerStatusChanged(self, status):
-        print(statusMessage[status])
+        # print(statusMessage[status])
+        pass
+
+    def postionStatusChanged(self, position):
+        duration = self.media_player.duration()
+        if duration >= 0:
+            total_time = QTime(
+                0,
+                (duration // 60000) % 60,
+                (duration // 1000) % 60
+            )
+            current_time = QTime(
+                0,
+                (position // 60000) % 60,
+                (position // 1000) % 60
+            )
+            self.timer_label.setText(
+                f"{current_time.toString('mm:ss')} / {total_time.toString('mm:ss')}")
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = VideoPlayer()
     window.show()
-    sys.exit(app.exec())
+    sys.exit(app.exec_())
