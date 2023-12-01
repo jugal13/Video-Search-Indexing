@@ -29,7 +29,7 @@ class VideoPlayer(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Video Player")
-        self.setGeometry(100, 100, 374, 472)
+        self.setGeometry(100, 100, 374, 504)
 
         self.file_name = ""
         self.first_load = False
@@ -44,6 +44,7 @@ class VideoPlayer(QMainWindow):
         self.select_video_button = QPushButton("Select Video")
         self.play_button = QPushButton("Play")
         self.stop_button = QPushButton("Stop")
+        self.reset_frame_button = QPushButton("Reset Frame")
 
         self.file_label = QLabel("No file selected")
         self.file_label.setMinimumHeight(10)
@@ -63,6 +64,7 @@ class VideoPlayer(QMainWindow):
         self.layout.addWidget(self.select_video_button)
         self.layout.addWidget(self.play_button)
         self.layout.addWidget(self.stop_button)
+        self.layout.addWidget(self.reset_frame_button)
 
         self.central_widget.setLayout(self.layout)
 
@@ -71,6 +73,7 @@ class VideoPlayer(QMainWindow):
         self.select_video_button.clicked.connect(self.select_video)
         self.play_button.clicked.connect(self.play_video)
         self.stop_button.clicked.connect(self.stop_video)
+        self.reset_frame_button.clicked.connect(self.reset_video)
 
         self.media_player.mediaStatusChanged.connect(self.mediaStatusChanged)
         self.media_player.stateChanged.connect(self.playerStatusChanged)
@@ -127,6 +130,13 @@ class VideoPlayer(QMainWindow):
     def stop_video(self):
         self.media_player.stop()
         self.play_button.setText("Play")
+
+    def reset_video(self):
+        if not self.first_load:
+            time_in_ms = int(self.matched_first_frame / 30 * 1000)
+            self.media_player.setPosition(time_in_ms)
+            self.media_player.play()
+            self.play_button.setText("Pause")
 
     def mediaStatusChanged(self, status):
         # print(statusMessage[status])
