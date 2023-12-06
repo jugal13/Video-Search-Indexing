@@ -130,6 +130,21 @@ class VideoPlayer(QMainWindow):
     def stop_video(self):
         self.media_player.stop()
         self.play_button.setText("Play")
+        if self.media_player.state() == QMediaPlayer.StoppedState:
+            duration = self.media_player.duration()
+            if duration >= 0:
+                total_time = QTime(
+                    0,
+                    (duration // 60000) % 60,
+                    (duration // 1000) % 60
+                )
+                current_time = QTime(
+                    0,
+                    (0 // 60000) % 60,
+                    (0 // 1000) % 60
+                )
+                self.timer_label.setText(
+                    f"{current_time.toString('mm:ss')} / {total_time.toString('mm:ss')}")
 
     def reset_video(self):
         if not self.first_load:
