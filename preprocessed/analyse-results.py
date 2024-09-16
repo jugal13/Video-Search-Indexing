@@ -1,5 +1,4 @@
 import pickle
-import pandas as pd
 import os
 import glob
 
@@ -9,7 +8,7 @@ from read_rgb import read_frame
 
 
 def test(video_path, hash_values):
-    video_reader = read_frame()(video_path)
+    video_reader = read_frame(video_path)
 
     for frame in video_reader:
         frame_hash = generate_frame_hash(frame)
