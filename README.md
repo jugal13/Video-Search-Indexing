@@ -1,6 +1,55 @@
 # Video Search Indexing
 
-# Problem Statement
+# Short Problem Statement 
+
+- Problem statement 
+  - Provided a database of videos and given a set of query videos, find an exact video match and compute the indexed start frame of the query video in the matched video.
+  - Click [here](#full-problem-statement) to view the full problem statement
+  - Constraints
+    - Each frame size is fixed - CIF format (352x288)
+    - Frame rate is fixed (30fps)
+    - Each frame is a perfect match perceptually and at a pixel level i.e at a bit level
+    - Query videos will be of a length between 20 to 40 seconds
+    - Database videos will be upwards of 10 minutes
+
+# Setup
+
+- Preprocess database - generate frame difference hashes (hash-diff-videos)
+- Store data in a pickle file
+
+## Solution
+
+- Explointing the following assumptions
+
+1. Video frame size remains consistent between database and query videos
+2. Video frame rate remains consistent ()
+3. Frames are a perfect match i.e the frames match at a pixel level which means at a bit level they are the same
+
+- Preprocessing
+
+1. Read each frame (RGB format)
+2. Obtain difference between two consectuive frames
+3. Hash the difference of frames
+4. Store in a pickle file
+
+- Matching
+
+1. Load the database and UI
+2. In the UI upload the video query (10-20 seconds) clip
+3. Read frames of the query clip
+4. Obtain the difference of frames
+5. Hash the difference of frames
+6. Match the hashes from the query to the database to obtain video and frame number
+7. Resume playback of video from the said frame number by calculating time from frame number and frame rate
+
+### Contributors
+
+1. [Jugal](https://github.com/jugal13)
+2. [Sanjay](https://github.com/SanjayRaghavendra)
+3. [Prateeksha](https://github.com/pratheeksha22)
+4. [Pooja](https://github.com/Poojaas-33)
+
+# Full Problem Statement
 
 ## Searching and Indexing Video/Audio
 
@@ -42,39 +91,3 @@ Displaying the output:
 
 The output displayed needs to be in a custom video player with basic functionality and support audio/video synchronization. It is expected to default to the first frame of the query video. Basic functionality includes play (from current frame), pause while the video is playing and reset to go to the beginning of the video. You are free to use any UI mechanism of choice, as long as you support the basic requirements.
 
-# Setup
-
-- Preprocess database - generate frame difference hashes (hash-diff-videos)
-- Store data in a pickle file
-
-## Solution
-
-- Explointing the following assumptions
-
-1. Video frame size remains consistent between database and query videos
-2. Video frame rate remains consistent ()
-3. Frames are a perfect match i.e the frames match at a pixel level which means at a bit level they are the same
-
-- Preprocessing
-
-1. Read each frame (RGB format)
-2. Obtain difference between two consectuive frames
-3. Hash the difference of frames
-4. Store in a pickle file
-
-- Matching
-
-1. Load the database and UI
-2. In the UI upload the video query (10-20 seconds) clip
-3. Read frames of the query clip
-4. Obtain the difference of frames
-5. Hash the difference of frames
-6. Match the hashes from the query to the database to obtain video and frame number
-7. Resume playback of video from the said frame number by calculating time from frame number and frame rate
-
-### Contributors
-
-1. [Jugal](https://github.com/jugal13)
-2. [Sanjay](https://github.com/SanjayRaghavendra)
-3. [Prateeksha](https://github.com/pratheeksha22)
-4. [Pooja](https://github.com/Poojaas-33)
